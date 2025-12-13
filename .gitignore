@@ -1,0 +1,21 @@
+# --- 시스템/IDE 관련 (무시) ---
+.vs
+Binaries
+Intermediate
+DerivedDataCache
+Saved
+.vscode
+.idea
+*.sln
+*.suo
+*.sdf
+
+# --- 빌드 관련 (무시) ---
+Build/*
+
+# --- ★핵심★ 에셋 폴더 통째로 무시 ---
+# 이걸 넣어야 파라곤 같은 무거운 파일이 안 올라갑니다.
+Content/*
+
+# --- 설정 파일 (이건 올려야 함) ---
+!Config
