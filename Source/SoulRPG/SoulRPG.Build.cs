@@ -10,7 +10,7 @@ public class SoulRPG : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject"
 			, "Engine", "InputCore"
-			, "EnhancedInput" });
+			, "EnhancedInput","AIModule" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

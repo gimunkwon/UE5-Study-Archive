@@ -20,14 +20,14 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	// 업데이트 함수
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-	
 	// ----------변수-------------
-	
+#pragma region Instance
 	// 캐릭터 정보 캐싱
 	UPROPERTY(BlueprintReadOnly, Category="Character")
 	ASoul_Character* Soul_Character;
 	UPROPERTY(BlueprintReadOnly, Category="Character")
 	UCharacterMovementComponent* SoulCharacterMovement;
+#pragma endregion
 	// 캐릭터의 속력값
 	UPROPERTY(BlueprintReadOnly, Category="Movement")
 	float GroundSpeed;

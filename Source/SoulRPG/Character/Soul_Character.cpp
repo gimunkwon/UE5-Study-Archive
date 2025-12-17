@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "SoulRPG/Item/BaseWeapon.h"
 
 
 ASoul_Character::ASoul_Character()
@@ -44,7 +45,6 @@ ASoul_Character::ASoul_Character()
 	
 }
 
-
 void ASoul_Character::BeginPlay()
 {
 	Super::BeginPlay();
@@ -56,6 +56,96 @@ void ASoul_Character::BeginPlay()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+	
+	if (DefaultWeaponClass)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			ABaseWeapon* SpawnedWeapon =  World->SpawnActor<ABaseWeapon>(DefaultWeaponClass);
+			if (SpawnedWeapon)
+			{
+				EquipWeapon(SpawnedWeapon);
+			}
+		}
+	}
+	CurrentHealth = MaxHealth;
+}
+
+void ASoul_Character::Attack()
+{
+	// 1. 구르는 중이거나 죽었으면 공격 불가
+	if (CurrentState == ECharacterState::Rolling || CurrentState == ECharacterState::Dead) return;
+	
+	// 2. 변경점 이미 공격중이라면 -> 예약만 하고 끝냄
+	if (CurrentState == ECharacterState::Attacking)
+	{
+		bHasQueuedInput = true;
+		UE_LOG(LogTemp, Warning, TEXT("다음 공격 예약됨!"));
+		return;
+	}
+	// 3. 공격 중이 아니라면(처음클릭)-> 바로 실행 로직 호출
+	ComboAction();
+}
+
+void ASoul_Character::ComboAction()
+{
+	// A. 처음 때리는 거면 (Idle)
+	if (CurrentState == ECharacterState::Idle)
+	{
+		ComboCount = 1;
+	}
+	// B. 연타 치는거
+	else if (bHasQueuedInput)
+	{
+		bHasQueuedInput = false;
+		ComboCount++; // 다음 콤보로
+		if (ComboCount > MaxComboCount) ComboCount = 1;
+	}
+	// C. 공격 중인데도 예약이 없다(타이밍 놓침)
+	else
+	{
+		return;
+	}
+	
+	// 2. 몽타주가 없으면 실행 불가
+	if (AttackMontage == nullptr) return;
+	// 4. 재생할 섹션 이름 만들기 (Attack_1, Attack_2....)
+	
+	if (AttackMontage)
+	{
+		FName SectionName = FName(*FString::Printf(TEXT("Attack_%d"), ComboCount));
+		
+		PlayAnimMontage(AttackMontage, 0.8f, SectionName);
+		
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &ASoul_Character::OnAttackMontageEnded);
+			GetMesh()->GetAnimInstance()->Montage_SetEndDelegate(EndDelegate, AttackMontage);
+		}
+	}
+	// 6. 상태변경
+	SetState(ECharacterState::Attacking);
+}
+
+void ASoul_Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (bInterrupted)
+	{
+		return;
+	}
+	
+	
+	// 공격이 끝나면 상태 초기화 & 콤보 초기화
+	if (Montage == AttackMontage)
+	{
+		SetState(ECharacterState::Idle);
+		ComboCount = 0; // 공격 끈힉면 0으로 리셋
+		bHasQueuedInput = false;
+		UE_LOG(LogTemp, Warning, TEXT("공격 종료! 콤보 리셋"))
 	}
 }
 
@@ -81,6 +171,7 @@ void ASoul_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ASoul_Character::Sprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ASoul_Character::StopSprint);
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Started, this, &ASoul_Character::Roll);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ASoul_Character::Attack);
 	}
 }
 
@@ -94,6 +185,44 @@ bool ASoul_Character::IsBusy() const
 void ASoul_Character::SetState(ECharacterState NewState)
 {
 	CurrentState = NewState;
+}
+
+void ASoul_Character::SetWeaponCollisionEnabled(bool bEnabled)
+{
+	if (EquippedWeapon)
+	{
+		if (bEnabled)
+		{
+			EquippedWeapon->EnableCollision();
+			UE_LOG(LogTemp, Warning, TEXT("무기 충돌 켜짐"))
+		}
+		else
+		{
+			EquippedWeapon->DisableCollision();
+			UE_LOG(LogTemp, Warning, TEXT("무기 충돌 꺼짐"))
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("오류: EquippedWeapon이 비어있음"));
+	}
+}
+
+float ASoul_Character::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	
+	CurrentHealth = FMath::Clamp(CurrentHealth - ActualDamage, 0.f, MaxHealth);
+	
+	UE_LOG(LogTemp, Error, TEXT("플레이어 피격 남은 체력:%f"),CurrentHealth);
+	if (CurrentHealth <= 0.f)
+	{
+		UE_LOG(LogTemp, Error, TEXT("플레이어 사망"));
+	}
+	
+	
+	return ActualDamage;
 }
 
 void ASoul_Character::Move(const FInputActionValue& Value)
@@ -197,5 +326,20 @@ void ASoul_Character::Roll()
 	LaunchCharacter(LaunchVelocity, true, false);
 	UE_LOG(LogTemp, Warning, TEXT("현재 구르기 속도: %f"),RollImpulse);
 	UE_LOG(LogTemp, Warning, TEXT("구르기 발동"));
+}
+
+void ASoul_Character::EquipWeapon(ABaseWeapon* WeaponToEquip)
+{
+	if (WeaponToEquip == nullptr) return;
+	
+	const FName SocketName = FName("WeaponSocket");
+	// FAttachmentTransformRules::SnapToTarget : 위치와 회전을 소켓에 딱 맞춤
+	WeaponToEquip->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
+	
+	// 무기의 주인을 나로 설정(데미지 계산시 필요)
+	WeaponToEquip->SetOwner(this);
+	WeaponToEquip->SetInstigator(this);
+	
+	EquippedWeapon = WeaponToEquip;
 }
 
