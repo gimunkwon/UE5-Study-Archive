@@ -6,6 +6,7 @@
 #include "Soul_Character.generated.h"
 
 #pragma region Forward Declarations
+class USoul_Character_HUD;
 class ABaseWeapon;
 struct FInputActionValue;
 class UInputAction;
@@ -144,4 +145,12 @@ protected:
 	float MaxHealth = 100.f;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category="Status")
 	float CurrentHealth;
+	// 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> HUDClass;
+	// 위젯 변수
+	UPROPERTY()
+	USoul_Character_HUD* MainHUD;
+	// 마우스 커서 방향으로 캐릭터 회전 시키기
+	void RotateToMouseCursor();
 };

@@ -5,6 +5,7 @@
 
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 
 ABaseWeapon::ABaseWeapon()
@@ -73,15 +74,26 @@ void ABaseWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComp, AActor* Othe
 		}
 	}
 	
-	
 	UGameplayStatics::ApplyDamage(
 		OtherActor,
 		20.0f,
 		GetInstigator()->GetController(),
 		this,
 		UDamageType::StaticClass());
-	
 	UE_LOG(LogTemp, Warning, TEXT("적중!: %s"), *OtherActor->GetName());
+	
+	// 이펙트 재생
+	if (HitParticle)
+	{
+		// 부딪힌 위치(HitResult.ImpacePoint)에 이펙트 생성
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitParticle, OtherActor->GetActorLocation()
+			,FRotator::ZeroRotator, true);
+	}
+	// 사운드 재생
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, HitSound, GetActorLocation());
+	}
 }
 
 void ABaseWeapon::Tick(float DeltaTime)

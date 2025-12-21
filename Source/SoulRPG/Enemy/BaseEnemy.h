@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "BaseEnemy.generated.h"
 
+class UWidgetComponent;
 class UBoxComponent;
 
 UCLASS()
@@ -39,6 +40,9 @@ protected:
 	UFUNCTION()
 	void OnHandOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp
 		, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResul);
+	// 체력바 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")
+	UWidgetComponent* HealthBarWidget;
 public:
 	virtual void Tick(float DeltaTime) override;
 	// 데미지 함수

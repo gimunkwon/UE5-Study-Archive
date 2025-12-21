@@ -5,10 +5,12 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "SoulRPG/Item/BaseWeapon.h"
+#include "SoulRPG/UI/Soul_Character_HUD.h"
 
 
 ASoul_Character::ASoul_Character()
@@ -70,7 +72,19 @@ void ASoul_Character::BeginPlay()
 			}
 		}
 	}
+	
 	CurrentHealth = MaxHealth;
+	
+	// 위젯 생성및 화면 부착
+	if (HUDClass)
+	{
+		MainHUD = CreateWidget<USoul_Character_HUD>(GetWorld(), HUDClass);
+		if (MainHUD)
+		{
+			MainHUD->AddToViewport();
+			MainHUD->SetHealth(CurrentHealth, MaxHealth);
+		}
+	}
 }
 
 void ASoul_Character::Attack()
@@ -85,6 +99,8 @@ void ASoul_Character::Attack()
 		UE_LOG(LogTemp, Warning, TEXT("다음 공격 예약됨!"));
 		return;
 	}
+	
+	
 	// 3. 공격 중이 아니라면(처음클릭)-> 바로 실행 로직 호출
 	ComboAction();
 }
@@ -112,6 +128,10 @@ void ASoul_Character::ComboAction()
 	// 2. 몽타주가 없으면 실행 불가
 	if (AttackMontage == nullptr) return;
 	// 4. 재생할 섹션 이름 만들기 (Attack_1, Attack_2....)
+	
+	// 공격 시작전에 마우스 방향 보기
+	RotateToMouseCursor();
+	
 	
 	if (AttackMontage)
 	{
@@ -178,7 +198,7 @@ void ASoul_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 bool ASoul_Character::IsBusy() const
 {
 	// 구르거나 공격 중이면 바쁨
-	return CurrentState == ECharacterState::Rolling || CurrentState == ECharacterState::Rolling 
+	return CurrentState == ECharacterState::Attacking || CurrentState == ECharacterState::Rolling 
 	|| CurrentState == ECharacterState::Dead;
 }
 
@@ -220,7 +240,11 @@ float ASoul_Character::TakeDamage(float DamageAmount, struct FDamageEvent const&
 	{
 		UE_LOG(LogTemp, Error, TEXT("플레이어 사망"));
 	}
-	
+	// UI 갱신
+	if (MainHUD)
+	{
+		MainHUD->SetHealth(CurrentHealth, MaxHealth);
+	}
 	
 	return ActualDamage;
 }
@@ -229,6 +253,12 @@ void ASoul_Character::Move(const FInputActionValue& Value)
 {
 	if (IsBusy()) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
+	
+	if (AttackMontage && GetMesh()->GetAnimInstance()->Montage_IsPlaying(AttackMontage))
+	{
+		GetMesh()->GetAnimInstance()->Montage_Stop(0.2f, AttackMontage);
+	}
+	
 	if (Controller != nullptr)
 	{
 		// 1. 컨트롤러(카메라)가 보는 방향 알아내기
@@ -271,15 +301,15 @@ void ASoul_Character::Roll()
 	// 이미 바쁘면 구르기 불가
 	if (IsBusy()) return;
 	
-	// 1. 이미 몽타주가 재생 중이면 무시(캔슬 방지)
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	/*// 1. 이미 몽타주가 재생 중이면 무시(캔슬 방지)
 	if (AnimInstance && AnimInstance->IsAnyMontagePlaying())
 	{
 		return;
-	}
+	}*/
 	// 2. 몽타주 재생
 	if (RollMontage)
 	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		PlayAnimMontage(RollMontage);
 		// 구르는동안 무적판정 or 스태미나 깎는 로직
 		// 상태 변경
@@ -341,5 +371,27 @@ void ASoul_Character::EquipWeapon(ABaseWeapon* WeaponToEquip)
 	WeaponToEquip->SetInstigator(this);
 	
 	EquippedWeapon = WeaponToEquip;
+}
+
+void ASoul_Character::RotateToMouseCursor()
+{
+	APlayerController* PC = Cast<APlayerController>(Controller);
+	if (PC)
+	{
+		FHitResult HitResult;
+		if (PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+		{
+			FVector TargetLocation = HitResult.Location;
+			FVector SelfLocation = GetActorLocation();
+			
+			TargetLocation.Z = SelfLocation.Z;
+			// 방향 벡터 구하기
+			FVector LookDirection = (TargetLocation - SelfLocation).GetSafeNormal();
+			// 회전값으로 변환
+			FRotator TargetRotation = LookDirection.Rotation();
+			// 캐릭터 회전 적용
+			SetActorRotation(TargetRotation);
+		}
+	}
 }
 

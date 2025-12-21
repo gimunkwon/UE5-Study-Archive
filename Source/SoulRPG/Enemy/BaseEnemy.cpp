@@ -5,7 +5,9 @@
 
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "SoulRPG/UI/Soul_Character_HUD.h"
 
 
 ABaseEnemy::ABaseEnemy()
@@ -20,6 +22,14 @@ ABaseEnemy::ABaseEnemy()
 	RightHandCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
 	RightHandCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECR_Overlap);
 	
+	// 위젯 컴포넌트 생성및 부착
+	HealthBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+	HealthBarWidget->SetupAttachment(GetRootComponent());
+	// 2. 위치 및 설정
+	HealthBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 120.0f));
+	HealthBarWidget->SetWidgetSpace(EWidgetSpace::Screen); // 항상 카메라를 정면으로 바라보게함(빌보드)
+	HealthBarWidget->SetDrawSize(FVector2D(150.f, 20.f));
+	
 }
 
 
@@ -28,6 +38,12 @@ void ABaseEnemy::BeginPlay()
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;
 	RightHandCollision->OnComponentBeginOverlap.AddDynamic(this, &ABaseEnemy::OnHandOverlap);
+	
+	USoul_Character_HUD* EnemyHUD = Cast<USoul_Character_HUD>(HealthBarWidget->GetUserWidgetObject());
+	if (EnemyHUD)
+	{
+		EnemyHUD->SetHealth(CurrentHealth, MaxHealth);
+	}
 }
 
 
@@ -93,6 +109,19 @@ float ABaseEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& Dama
 		Die();
 		UE_LOG(LogTemp, Error, TEXT("적 사망!"));
 	}
+	
+	// 체력바 갱신
+	USoul_Character_HUD* EnemyHUD = Cast<USoul_Character_HUD>(HealthBarWidget->GetUserWidgetObject());
+	if (EnemyHUD)
+	{
+		EnemyHUD->SetHealth(CurrentHealth, MaxHealth);
+	}
+	if (CurrentHealth <= 0.f)
+	{
+		HealthBarWidget->SetVisibility(false);
+	}
+	
+	
 	return DamageApplied;
 }
 

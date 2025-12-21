@@ -32,6 +32,13 @@ protected:
 	UFUNCTION()
 	void OnBoxOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp
 		, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	// 타격시 재생할 소리
+	UPROPERTY(EditAnywhere, Category="Combat Properties")
+	USoundCue* HitSound;
+	// 타격 시 튀길 피/스파크 이펙트
+	UPROPERTY(EditAnywhere, Category="Combat Properties")
+	UParticleSystem* HitParticle;
 private:
 	// 한 번 휘두를 대 같은적을 여러번 때리는 걸 방지
 	TArray<AActor*> IgnoreActors;

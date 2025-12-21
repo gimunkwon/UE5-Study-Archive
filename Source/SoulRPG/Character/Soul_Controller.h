@@ -13,4 +13,8 @@ UCLASS()
 class SOULRPG_API ASoul_Controller : public APlayerController
 {
 	GENERATED_BODY()
+	
+protected:
+	virtual void BeginPlay() override;
+	
 };
