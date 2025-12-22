@@ -21,9 +21,9 @@ public:
 protected:
 	UPROPERTY(meta=(BindWidget))
 	class UProgressBar* HealthBar;
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta=(BindWidgetOptional))
 	UButton* InventoryButton;
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta=(BindWidgetOptional))
 	UButton* EquipmentButton;
 	
 	// 버튼 클릭시 호출될 함수

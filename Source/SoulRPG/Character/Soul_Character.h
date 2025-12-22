@@ -6,6 +6,8 @@
 #include "Soul_Character.generated.h"
 
 #pragma region Forward Declarations
+class USoul_InventoryWidget;
+class USoul_InventoryComponent;
 class USoul_Character_HUD;
 class ABaseWeapon;
 struct FInputActionValue;
@@ -69,7 +71,6 @@ protected:
 	// 공격이 끝났을 때(몽타주 종료) 초기화할 함수
 	UFUNCTION()
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	
 public:
 #pragma region InputActions
 	// 입력 에셋
@@ -101,6 +102,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	float RunSpeed = 800.f;
 #pragma endregion
+	
+#pragma region AnimNotify
 	// ----헬퍼 함수----
 	// 상태 확인용 헬퍼 함수
 	bool IsBusy() const; // 구르거나 공격 중인가? (행동 불가 상태)
@@ -109,7 +112,11 @@ public:
 	// 애니메이션 노티파이에서 부를 함수
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponCollisionEnabled(bool bEnabled);
-	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+#pragma endregion
+	
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent
+		, class AController* EventInstigator, AActor* DamageCauser) override;
+	
 #pragma region CameraEffects
 	// 구르기 시작할 때 호출(줌 인)
 	UFUNCTION(BlueprintImplementableEvent, Category="Camera")
@@ -117,6 +124,18 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category="Camera")
 	void StopRollZoom();
 #pragma endregion 
+	
+#pragma region InventoryComponent
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	TSubclassOf<UUserWidget> InventoryClass;
+	UPROPERTY()
+	USoul_InventoryWidget* InventoryWidget;
+	// 인벤토리 함수
+	void ToggleInvnentory();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
+	USoul_InventoryComponent* InventoryComp;
+#pragma endregion
+	
 protected:
 #pragma region InputFunc
 	// 이동
@@ -129,7 +148,10 @@ protected:
 	void StopSprint();
 	// 구르기 함수
 	void Roll();
+	// 마우스 커서 방향으로 캐릭터 회전 시키기
+	void RotateToMouseCursor();
 #pragma endregion
+	
 #pragma region Weapon
 	// 에디터에서 지정할 기본 무기 클래스
 	UPROPERTY(EditDefaultsOnly, Category="Combat")
@@ -140,6 +162,8 @@ protected:
 	// 무기 장착 함수
 	void EquipWeapon(ABaseWeapon* WeaponToEquip);
 #pragma endregion
+
+#pragma region HPComponent
 	// 체력 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite ,Category="Status")
 	float MaxHealth = 100.f;
@@ -151,6 +175,6 @@ protected:
 	// 위젯 변수
 	UPROPERTY()
 	USoul_Character_HUD* MainHUD;
-	// 마우스 커서 방향으로 캐릭터 회전 시키기
-	void RotateToMouseCursor();
+#pragma endregion
+	
 };

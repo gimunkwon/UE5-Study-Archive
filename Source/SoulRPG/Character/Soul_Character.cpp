@@ -7,10 +7,13 @@
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
+#include "Component/Soul_InventoryComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "SoulRPG/Item/BaseWeapon.h"
 #include "SoulRPG/UI/Soul_Character_HUD.h"
+#include "SoulRPG/UI/Soul_InventoryWidget.h"
 
 
 ASoul_Character::ASoul_Character()
@@ -45,6 +48,7 @@ ASoul_Character::ASoul_Character()
 	FollowCamera->bUsePawnControlRotation = false; // 카메라는 붐만 따라가면 됨
 #pragma endregion
 	
+	InventoryComp = CreateDefaultSubobject<USoul_InventoryComponent>(TEXT("InventoryComp"));
 }
 
 void ASoul_Character::BeginPlay()
@@ -395,3 +399,62 @@ void ASoul_Character::RotateToMouseCursor()
 	}
 }
 
+void ASoul_Character::ToggleInvnentory()
+{
+	if (!InventoryClass) return;
+	
+	if (!InventoryWidget)
+	{
+		InventoryWidget = CreateWidget<USoul_InventoryWidget>(GetWorld(), InventoryClass);
+	}
+	
+	if (InventoryWidget)
+	{
+		if (!InventoryWidget->IsInViewport())
+		{
+			
+			
+			// 컴포넌트에서 아이템 목록 가져오기
+			if (InventoryComp)
+			{
+				const TArray<FItemData>& CurrentItems = InventoryComp->InventoryItems;
+				
+				// 위젯 업데이트 호출
+				InventoryWidget->RefreshInventory(CurrentItems);
+			}
+			
+			// 인벤토리 열기(전체 화면)
+			InventoryWidget->AddToViewport();
+			
+			// 입력 모드를 UI 전용으로 변경
+			APlayerController* PC = Cast<APlayerController>(Controller);
+			if (PC)
+			{
+				FInputModeGameAndUI InputMode;
+				InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+				InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+				PC->SetInputMode(InputMode);
+				
+				PC->bShowMouseCursor = true;
+				UGameplayStatics::SetGamePaused(GetWorld(), true);
+			}
+		}
+		else
+		{
+			// 인벤토리 닫기
+			InventoryWidget->RemoveFromParent();
+			
+			APlayerController* PC = Cast<APlayerController>(Controller);
+			if (PC)
+			{
+				 FInputModeGameAndUI InputMode;
+				InputMode.SetWidgetToFocus(nullptr);
+				InputMode.SetHideCursorDuringCapture(false);
+				
+				 PC->SetInputMode(InputMode);
+				 PC->bShowMouseCursor = true;
+				UGameplayStatics::SetGamePaused(GetWorld(), false);
+			}
+		}
+	}
+}
