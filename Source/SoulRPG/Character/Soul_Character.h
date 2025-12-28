@@ -86,6 +86,15 @@ public:
 	UInputAction* RollAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	UInputAction* AttackAction;
+	// 퀵슬롯 입력 액션
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* QuickSlot1Aciton;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* QuickSlot2Aciton;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* QuickSlot3Aciton;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* QuickSlot4Aciton;
 #pragma endregion
 	
 #pragma region AnimMontage
@@ -150,6 +159,11 @@ protected:
 	void Roll();
 	// 마우스 커서 방향으로 캐릭터 회전 시키기
 	void RotateToMouseCursor();
+	// 퀵슬롯 입력 처리 함수
+	void OnQuickSlot1();
+	void OnQuickSlot2();
+	void OnQuickSlot3();
+	void OnQuickSlot4();
 #pragma endregion
 	
 #pragma region Weapon
@@ -176,5 +190,8 @@ protected:
 	UPROPERTY()
 	USoul_Character_HUD* MainHUD;
 #pragma endregion
+	
+	// 포션 함수
+	void ApplyItemEffect(FName ItemID);
 	
 };

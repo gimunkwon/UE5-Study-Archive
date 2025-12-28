@@ -196,6 +196,11 @@ void ASoul_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ASoul_Character::StopSprint);
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Started, this, &ASoul_Character::Roll);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ASoul_Character::Attack);
+		// 퀵슬롯 1~4번 바인딩
+		EnhancedInputComponent->BindAction(QuickSlot1Aciton, ETriggerEvent::Started, this , &ASoul_Character::OnQuickSlot1);
+		EnhancedInputComponent->BindAction(QuickSlot2Aciton, ETriggerEvent::Started, this, &ASoul_Character::OnQuickSlot2);
+		EnhancedInputComponent->BindAction(QuickSlot3Aciton, ETriggerEvent::Started, this, &ASoul_Character::OnQuickSlot3);
+		EnhancedInputComponent->BindAction(QuickSlot4Aciton, ETriggerEvent::Started, this, &ASoul_Character::OnQuickSlot4);
 	}
 }
 
@@ -457,4 +462,75 @@ void ASoul_Character::ToggleInvnentory()
 			}
 		}
 	}
+}
+
+void ASoul_Character::OnQuickSlot1()
+{
+	// 인벤토리 컴포넌트가 있고, 상태가 행동 불가가 아닐때만
+	if (InventoryComp && CurrentState != ECharacterState::Dead)
+	{
+		// 0번 인덱스(퀵슬롯1번)사용 -> 사용된 아이템 ID 리턴 받음
+		FName UsedItemID = InventoryComp->UseItemFromQuickSlot(0);
+		// 아이템 ID를 가지고 효과 함수 호출
+		ApplyItemEffect(UsedItemID);
+	}
+}
+
+void ASoul_Character::OnQuickSlot2()
+{
+	// 인벤토리 컴포넌트가 있고, 상태가 행동 불가가 아닐때만
+	if (InventoryComp && CurrentState != ECharacterState::Dead)
+	{
+		// 0번 인덱스(퀵슬롯1번)사용 -> 사용된 아이템 ID 리턴 받음
+		FName UsedItemID = InventoryComp->UseItemFromQuickSlot(1);
+		// 아이템 ID를 가지고 효과 함수 호출
+		ApplyItemEffect(UsedItemID);
+	}
+}
+
+void ASoul_Character::OnQuickSlot3()
+{
+	// 인벤토리 컴포넌트가 있고, 상태가 행동 불가가 아닐때만
+	if (InventoryComp && CurrentState != ECharacterState::Dead)
+	{
+		// 0번 인덱스(퀵슬롯1번)사용 -> 사용된 아이템 ID 리턴 받음
+		FName UsedItemID = InventoryComp->UseItemFromQuickSlot(2);
+		// 아이템 ID를 가지고 효과 함수 호출
+		ApplyItemEffect(UsedItemID);
+	}
+}
+
+void ASoul_Character::OnQuickSlot4()
+{
+	// 인벤토리 컴포넌트가 있고, 상태가 행동 불가가 아닐때만
+	if (InventoryComp && CurrentState != ECharacterState::Dead)
+	{
+		// 0번 인덱스(퀵슬롯1번)사용 -> 사용된 아이템 ID 리턴 받음
+		FName UsedItemID = InventoryComp->UseItemFromQuickSlot(3);
+		// 아이템 ID를 가지고 효과 함수 호출
+		ApplyItemEffect(UsedItemID);
+	}
+}
+
+void ASoul_Character::ApplyItemEffect(FName ItemID)
+{
+	// 빈 아이템이면 무시
+	if (ItemID.IsNone() || ItemID == FName("None")) return;
+	
+	// 아이템 ID에 따른 분기 처리
+	if (ItemID == FName("Potion_HP"))
+	{
+		// 체력 30 회복
+		CurrentHealth += 30.0f;
+		// 최대 체력 넘지 않게 고정
+		if (CurrentHealth > MaxHealth) CurrentHealth = MaxHealth;
+		
+		UE_LOG(LogTemp, Warning, TEXT("체력 회복! 현재 체력: %f"),CurrentHealth);
+		if (MainHUD)
+		{
+			MainHUD->SetHealth(CurrentHealth, MaxHealth);
+		}
+	}
+	
+	
 }

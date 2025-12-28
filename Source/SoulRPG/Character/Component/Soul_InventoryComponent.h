@@ -44,7 +44,23 @@ public:
 	// 겹치기 가능 여부
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsStackable;
+	// 현재 수량 (기본값 1)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Amount;
+	// 구조체 생성자 (기본값을 1로 설정) 이걸 안하면 처음생길때 0생기는거 방지
+	FItemData()
+		: ItemValue(0.0f),Amount(1),bIsStackable(true)
+	{}
 };
+
+// 델리게이트(구조체 FItemData를 넘겨줌)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+
+
+// 몇번 슬롯이 어떤 아이템으로 변했는지 방송
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FonQuickSlotUpdated, int32, SlotIndex, const FItemData&, ItemData);
+
+
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SOULRPG_API USoul_InventoryComponent : public UActorComponent
@@ -58,6 +74,24 @@ public:
 	// 에디터에서 만든 DT_ItemData를 넣을 변수
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category="Data")
 	class UDataTable* ItemDataTable;
+	// 퀵 슬롯용 데이터 저장(슬롯번호 : 아이템 ID)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Inventory")
+	TMap<int32, FName> QuickSlots;
+	// 블루 프린터에서 호출할 함수 (슬롯번호 0, 1, 2, 3, / 아이템 ID)
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	void SetQuickSlot(int32 SlotIndex, FName ItemID);
+	// 퀵슬롯 번호로 아이템 사용
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	FName UseItemFromQuickSlot(int32 SlotIndex);
+	
+	// 델리게이트 변수 생성
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FonQuickSlotUpdated OnQuickSlotUpdated;
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FOnInventoryUpdated OnInventoryUpdated;
+	// 아이템 ID로 전체 데이터를 찾는 헬퍼 함수
+	FItemData* GetItemData(FName ItemID);
+	
 protected:
 	virtual void BeginPlay() override;
 public:
@@ -66,4 +100,7 @@ public:
 	// 아이템 추가
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void GiveItem(FName ItemID);
+	// 아이템 중첩 함수
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	void AddToInventory(FItemData NewItem);
 };

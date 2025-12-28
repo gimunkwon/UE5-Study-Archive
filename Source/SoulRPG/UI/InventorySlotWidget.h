@@ -27,21 +27,28 @@ public:
 	
 	
 	// 외부에서 데이터를 넣어주면 UI 를 갱신하는 함수
+	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void SetItemData(const FItemData& Data);
 	void SetIsEmpty();
 	
 protected:
 	virtual void NativeOnInitialized() override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
-	UPROPERTY(meta=(BindWidget))
+	UFUNCTION(BlueprintImplementableEvent, Category="Event")
+	void OnRightClicked();
+	
+	UPROPERTY(meta=(BindWidgetOptional))
 	UImage* Image_Icon;
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta=(BindWidgetOptional))
 	UTextBlock* Text_Count;
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta=(BindWidgetOptional))
 	UButton* SlotButton;
 	// 버튼 클릭시 실행할 함수
 	UFUNCTION()
 	void OnButtonClicked();
+	UFUNCTION(BlueprintCallable)
+	FItemData GetMyItemData() const{return MyItemData;}
 	
 private:
 	FItemData MyItemData;

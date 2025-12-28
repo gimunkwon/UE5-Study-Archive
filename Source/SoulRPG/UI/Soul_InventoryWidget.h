@@ -23,11 +23,13 @@ public:
 	// 슬롯이 클릭됏을때 실행할 함수
 	UFUNCTION()
 	void HandleSlotClicked(const FItemData& ItemData);
+	UFUNCTION(BlueprintCallable, Category="UI")
+	UWrapBox* GetItemListWrapBox() const {return ItemListWrapBox;}
 	
 protected:
 	virtual void NativeOnInitialized() override;
-	UPROPERTY(meta=(BindWidget))
-	UWrapBox* ItemListWarpBox;
+	UPROPERTY(meta=(BindWidget),BlueprintReadWrite)
+	UWrapBox* ItemListWrapBox;
 	// 생성할 슬롯 위젯 클래스
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UInventorySlotWidget> SlotWidgetClass;	

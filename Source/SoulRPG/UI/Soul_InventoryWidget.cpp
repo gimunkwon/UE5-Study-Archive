@@ -14,10 +14,10 @@
 
 void USoul_InventoryWidget::RefreshInventory(const TArray<FItemData>& Items)
 {
-	if (!ItemListWarpBox || !SlotWidgetClass) return;
+	if (!ItemListWrapBox || !SlotWidgetClass) return;
 	
 	// 1. 기존 목록 비우기(초기화)
-	ItemListWarpBox->ClearChildren();
+	ItemListWrapBox->ClearChildren();
 	
 	// 2. 아이템 개수만큼 반복문 돌려서 슬롯 생성
 	for (const FItemData& Item : Items)
@@ -31,7 +31,7 @@ void USoul_InventoryWidget::RefreshInventory(const TArray<FItemData>& Items)
 			NewSlot->SetItemData(Item);
 			// 클릭되면 함수 실행
 			NewSlot->OnItemClicked.AddDynamic(this, &USoul_InventoryWidget::HandleSlotClicked);
-			ItemListWarpBox->AddChildToWrapBox(NewSlot);
+			ItemListWrapBox->AddChildToWrapBox(NewSlot);
 		}
 	}
 	if (VBox_ItemDetail)
@@ -55,7 +55,7 @@ void USoul_InventoryWidget::RefreshInventory(const TArray<FItemData>& Items)
 			{
 				// 빈 슬롯임을 알리는 함수 호출
 				EmptySlot->SetIsEmpty();
-				ItemListWarpBox->AddChildToWrapBox(EmptySlot);
+				ItemListWrapBox->AddChildToWrapBox(EmptySlot);
 			}
 		}
 	}
